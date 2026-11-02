@@ -812,8 +812,10 @@ Describe 'Configuration files and schema' {
 
     It 'keeps docs/Examples.md and config/examples in sync' {
         $md = Get-Content (Join-Path $script:RepoRoot 'docs' 'Examples.md') -Raw
-        $blocks = @([regex]::Matches($md, '(?s)```json\n(.*?)```') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_.Trim().StartsWith('{') })
+        # \r?\n: Windows checkouts convert line endings to CRLF.
+        $blocks = @([regex]::Matches($md, '(?s)```json\r?\n(.*?)```') | ForEach-Object { $_.Groups[1].Value } | Where-Object { $_.Trim().StartsWith('{') })
         $files = 'healthcare.json', 'small-org.json', 'single-department.json'
+        $blocks.Count | Should -BeGreaterOrEqual $files.Count -Because 'docs/Examples.md should contain one JSON block per example config'
         for ($i = 0; $i -lt $files.Count; $i++) {
             $fromDoc  = $blocks[$i] | ConvertFrom-Json -AsHashtable
             $fromFile = Get-Content (Join-Path $script:RepoRoot 'config' 'examples' $files[$i]) -Raw | ConvertFrom-Json -AsHashtable
