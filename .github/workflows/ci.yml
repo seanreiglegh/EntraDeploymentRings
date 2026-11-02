@@ -41,7 +41,8 @@ jobs:
         shell: pwsh
         run: |
           $results = Invoke-ScriptAnalyzer -Path ./Invoke-EntraDeploymentRings.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
-          $results | Format-Table -AutoSize
+          # Format-List, not a table: narrow runner consoles drop table columns (line and message).
+          $results | Format-List RuleName, Severity, ScriptName, Line, Message
           if ($results | Where-Object Severity -in 'Error', 'Warning') { throw 'PSScriptAnalyzer reported issues.' }
 
       - name: Pester

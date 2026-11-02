@@ -726,7 +726,9 @@ function ConvertTo-RingSettings {
     #>
     [CmdletBinding()]
     param([Parameter(Mandatory)] [hashtable] $Values)
+    if ($Values.Count -eq 0) { throw 'No settings were given: GroupNameBase and RingCount are required.' }
 
+    # The helpers below read $Values from this function's scope.
     function Get-Value([string] $Name, $Default = $null) {
         if ($Values.ContainsKey($Name) -and $null -ne $Values[$Name]) { return $Values[$Name] }
         return $Default
@@ -2349,7 +2351,7 @@ function Get-RingCandidateUsers {
     return , @($raw | ForEach-Object { ConvertTo-RingUser -GraphUser $_ })
 }
 
-function Update-RingApplyProgress {
+function Write-RingApplyProgress {
     <# Counts finished membership changes; logs every ApplyProgressEvery and drives a progress bar. #>
     [CmdletBinding()]
     param(
@@ -2413,7 +2415,7 @@ function Invoke-RingMembershipChanges {
             })
         }
         $weights = @{}; foreach ($cid in $chunks.Keys) { $weights[$cid] = $chunks[$cid].Count }
-        $onProgress = if ($Progress) { { param([int] $N) Update-RingApplyProgress -Progress $Progress -Count $N -Group $Group.DisplayName } } else { $null }
+        $onProgress = if ($Progress) { { param([int] $N) Write-RingApplyProgress -Progress $Progress -Count $N -Group $Group.DisplayName } } else { $null }
         $res = Invoke-RingGraphBatch -Requests $requests -RetryStatus $retry404 -Weights $weights -OnProgress $onProgress
         $fallback = [System.Collections.Generic.List[object]]::new()
         foreach ($id in $chunks.Keys) {
@@ -2457,7 +2459,7 @@ function Invoke-RingMembershipChanges {
             $map[$id] = $c
             $requests.Add(@{ id = $id; method = 'DELETE'; url = "/groups/$gid/members/$($c.UserId)/`$ref" })
         }
-        $onProgress = if ($Progress) { { param([int] $N) Update-RingApplyProgress -Progress $Progress -Count $N -Group $Group.DisplayName } } else { $null }
+        $onProgress = if ($Progress) { { param([int] $N) Write-RingApplyProgress -Progress $Progress -Count $N -Group $Group.DisplayName } } else { $null }
         $res = Invoke-RingGraphBatch -Requests $requests -OnProgress $onProgress
         foreach ($id in $map.Keys) {
             $r = $res[$id]; $c = $map[$id]
@@ -3382,7 +3384,7 @@ function Invoke-RingPreflight {
             $sel = 'id,userPrincipalName,accountEnabled,employeeType'
             if ($Settings.NeedsSignInActivity) { $sel += ',signInActivity' }
             try {
-                $page = Invoke-RingGraphRequest -Method GET -Uri "$($script:GraphApi)/users?`$select=$sel&`$top=1" -Purpose 'checking that users can be read'
+                $null = Invoke-RingGraphRequest -Method GET -Uri "$($script:GraphApi)/users?`$select=$sel&`$top=1" -Purpose 'checking that users can be read'
                 $extra = if ($Settings.NeedsSignInActivity) { ', including sign-in activity' } else { '' }
                 & $add 'Directory' 'Read users' 'Pass' "Users can be read$extra."
             }
