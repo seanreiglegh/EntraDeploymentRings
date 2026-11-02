@@ -1,6 +1,6 @@
 {
   "$schema": "./EntraDeploymentRings.schema.json",
-  "_comment": "Sample configuration for Invoke-EntraDeploymentRings.ps1 (Revision 1.0; schema: EntraDeploymentRings.schema.json). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored. RingWeights are percentages and must add up to 100. Never put ClientSecret, Rebalance, InitialRun, Preflight or CreateGroupsOnly in this file; prefer passing TeamsWebhookUrl at run time (it is a secret); set CreateMissingGroups to true only for the run that should create the groups.",
+  "_comment": "Sample configuration for Invoke-EntraDeploymentRings.ps1 (Revision 1.0.1; schema: EntraDeploymentRings.schema.json). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored. RingWeights are percentages and must add up to 100. Never put ClientSecret, Rebalance, InitialRun, Preflight or CreateGroupsOnly in this file; prefer passing TeamsWebhookUrl at run time (it is a secret); set CreateMissingGroups to true only for the run that should create the groups.",
 
   "GroupNameBase": "SG-Deploy-Users",
   "RingCount": 5,

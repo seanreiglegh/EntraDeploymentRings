@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0.0
+.VERSION 1.0.1
 .GUID 7c3e9a52-4b1d-4e8f-9a6b-2d5f8c1e0b47
 .AUTHOR Sean Reigle
 .COPYRIGHT (c) 2026 Sean Reigle. Released under the MIT License.
@@ -13,7 +13,7 @@
 
 # =============================================================================
 #  Invoke-EntraDeploymentRings.ps1
-#  Revision: 1.0
+#  Revision: 1.0.1
 #
 #  Creates and maintains Microsoft Entra ID security groups that act as
 #  user deployment rings for staggered software / configuration rollouts.
@@ -86,6 +86,13 @@
 #  ---------------------------------------------------------------------------
 #  REVISION HISTORY (most recent first)
 #  ---------------------------------------------------------------------------
+#  1.0.1 2026-11-02  Sean Reigle
+#        - No change to how the script behaves.
+#        - Tests and docs: example values (Graph request IDs, a timestamp,
+#          a group-name prefix and a user count) standardised on obvious
+#          placeholders; the scale check uses 25,000 users.
+#        - Docs: how Hash mode picks a ring (Configuration.md); pull
+#          requests limited to collaborators (CONTRIBUTING.md).
 #  1.0   2026-11-01  Sean Reigle
 #        - First public release.
 #        - Rings: weighted computed rings plus First and Last (managed by
@@ -471,7 +478,7 @@
     PSCustomObject. One run summary per execution.
 
 .NOTES
-    Revision: 1.0. See the PREREQUISITES and REVISION HISTORY sections at the
+    Revision: 1.0.1. See the PREREQUISITES and REVISION HISTORY sections at the
     top of this file.
 
     Only USER members of managed groups are evaluated. Devices or nested
@@ -554,7 +561,7 @@ param(
 
 Set-StrictMode -Version 3.0
 
-$script:ScriptRevision = '1.0'
+$script:ScriptRevision = '1.0.1'
 $script:MarkerProduct  = 'EntraDeploymentRings'
 $script:GraphApi       = 'v1.0'
 $script:BatchSize      = 20     # Graph $batch and members@odata.bind limit

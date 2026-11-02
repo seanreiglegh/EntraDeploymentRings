@@ -126,7 +126,7 @@ A passing suite shows that the script's logic is correct **against the emulator*
 | **Sign-in data** | The emulator always returns `signInActivity`. In a real tenant it needs Entra ID P1/P2 and `AuditLog.Read.All`, and can lag by hours. |
 | **Graph query details** | The emulator implements only the `$filter` forms the script uses. A typo in a real filter string would pass here. |
 | **Log Analytics ingestion** | Only the preflight test record is checked (one call to the ingestion endpoint, with the right `RecordType`). A full run's upload, the DCR schema and the table aren't. The `bicep` job checks only that the template builds. |
-| **Scale** | The largest end-to-end tenant has 1,200 users. A 14,500-user run against the emulator was checked separately; it is not part of the suite, and it says nothing about real Graph performance at that size. |
+| **Scale** | The largest end-to-end tenant has 1,200 users. A 25,000-user run against the emulator is checked separately before each release: the first fill, then a second run that must change nothing, with every ring within 0.35 percentage points of its weight. It isn't part of the suite, because building that tenant ~40 times would make CI very slow. It says nothing about real Graph performance at that size. |
 | **Teams and email rendering** | The payloads are checked for structure and content. How Teams or Outlook actually displays them isn't. |
 
 **Recommended before production:** run `-Preflight`, then `-WhatIf`, then a live run against a test tenant (or a small test group set with `-GroupNameBase SG-Test-Deploy`). Check the CSV, the Teams or email message, and the Log Analytics rows.
@@ -464,7 +464,7 @@ Every run and preflight first checks the network path to the endpoints it needs.
 | tests Entra sign-in for certificate auth, and stops before signing in when it can't be reached | `login.microsoftonline.com` times out behind a proxy. The run stops ("Network test failed … nothing was changed"), naming the endpoint, the reason, the proxy and the hosts to allow. It never calls `Connect-MgGraph` or Graph. |
 | stops before any Graph call when Graph can't be reached | A proxy 502 for `graph.microsoft.com` stops the run with no Graph call. |
 | only warns when an optional endpoint can't be reached | An unreachable Teams host gives a `FAILED (optional)` warning, and the run still succeeds. |
-| logs the sign-in and explains a failure with the whole inner error chain | `ClientCertificateCredential authentication failed:` with an inner `TaskCanceledException` becomes "Sign-in to Microsoft Graph failed after n s (Certificate): … -> TaskCanceledException: A task was canceled.", in the error and in the JSON. This is the empty error from the first real-tenant report. |
+| logs the sign-in and explains a failure with the whole inner error chain | `ClientCertificateCredential authentication failed:` with an inner `TaskCanceledException` becomes "Sign-in to Microsoft Graph failed after n s (Certificate): … -> TaskCanceledException: A task was canceled.", in the error and in the JSON. This is the case where the error used to show an empty reason. |
 | describes the sign-in it is about to make | Certificate: app and tenant; managed identity: system-assigned. |
 | shows network checks in preflight, and skips sign-in when a required endpoint fails | `Network` checks fail and sign-in is `Skip`. |
 | reports an endpoint that refuses the connection as unreachable (real probe) | The real check, not the emulator: a refused connection is unreachable, with a reason. |
@@ -491,7 +491,7 @@ What a 401/403 message says. See [Setup: Reading a permission error](Setup.md#re
 |---|---|
 | adds AuditLog.Read.All when sign-in activity is read | Reading `signInActivity` adds a second requirement, `AuditLog.Read.All`. |
 | shows the request decoded, without the host or API version | `%28displayName%2C%27…` is shown as `(displayName,'…`. |
-| reads the code, message and request-id from the SDK error text | Parses the real `Invoke-MgGraphRequest` error format (status line, headers, then JSON). This is the format of the first real-tenant 403 report. |
+| reads the code, message and request-id from the SDK error text | Parses the real `Invoke-MgGraphRequest` error format (status line, headers, then JSON). |
 | tells an app to grant the missing permission and consent to it | Every line of the message: operation and purpose, decoded request, Graph's text, what's needed, the app and tenant, the token's permissions, the fix, and the request-id. |
 | suggests GroupMember.Read.All when the app already has GroupMember.ReadWrite.All | When the token has the permission and the call is still refused, the message says so and offers the documented alternative. |
 | points at role-assignable groups when a membership change is refused despite the permission | The membership-specific cause is named. |
