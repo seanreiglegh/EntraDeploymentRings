@@ -1,0 +1,51 @@
+{
+  "$schema": "./EntraDeploymentRings.schema.json",
+  "_comment": "Sample configuration for Invoke-EntraDeploymentRings.ps1 (Revision 1.0; schema: EntraDeploymentRings.schema.json). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored. RingWeights are percentages and must add up to 100. Never put ClientSecret, Rebalance, InitialRun, Preflight or CreateGroupsOnly in this file; prefer passing TeamsWebhookUrl at run time (it is a secret); set CreateMissingGroups to true only for the run that should create the groups.",
+
+  "GroupNameBase": "SG-Deploy-Users",
+  "RingCount": 5,
+  "RingWeights": [1, 5, 15, 30, 49],
+  "AssignmentMode": "Hash",
+  "CreateMissingGroups": false,
+
+  "EnableInactiveRing": true,
+  "InactiveSignInDays": 90,
+  "NewUserGraceDays": 30,
+  "InactiveCompanyNames": ["Former"],
+  "InactiveEmployeeTypes": ["Former"],
+  "InactiveUpnPatterns": ["{user}.former@{domain}"],
+
+  "IncludeEmployeeTypes": ["Employee", "Contingent Worker"],
+  "IncludeUserTypes": ["Member"],
+  "DisabledUserAction": "Inactive",
+  "RequireAssignedLicense": false,
+  "ExcludeGroupIds": [],
+  "ExcludeUpnPatterns": ["SVC-{user}@{domain}"],
+  "RemoveInactiveFromManualRings": false,
+  "ReportExcludedInManualRings": true,
+
+  "MaxChangePercent": 10,
+  "MaxChangeFloor": 25,
+
+  "AuthMode": "Interactive",
+  "TenantId": "",
+  "ClientId": "",
+  "CertificateThumbprint": "",
+  "CertificateExpiryWarningDays": 30,
+  "ManagedIdentityClientId": "",
+  "GraphEnvironment": "Global",
+
+  "ReportDirectory": "./reports",
+  "ReportFormat": "Both",
+  "ReportRetentionDays": 0,
+
+  "TeamsWebhookUrl": "",
+  "TeamsNotifyOn": ["Failed", "BlockedByChangeLimit", "CompletedWithErrors", "CertificateExpiring"],
+  "EmailTo": [],
+  "EmailFrom": "",
+  "EmailNotifyOn": ["Failed", "BlockedByChangeLimit", "CompletedWithErrors", "CertificateExpiring"],
+
+  "LogIngestionEndpoint": "",
+  "LogDcrImmutableId": "",
+  "LogStreamName": "Custom-EntraDeploymentRings_CL"
+}

@@ -1,0 +1,81 @@
+# release.yml
+# Revision: 1.0
+#
+# Publishes a GitHub release when a version tag is pushed, for example:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# The tag must match the .VERSION in the script's PSScriptInfo block, or the
+# release fails. Assets: the script, a zip of the repository, and
+# SHA256SUMS.txt. Every asset also gets a signed build-provenance
+# attestation, so users can prove it was built by this workflow from this
+# repository:  gh attestation verify <file> -R seanreiglegh/EntraDeploymentRings
+# (see docs/Security.md). Attestations are free for public repositories.
+#
+# REVISION HISTORY (most recent first)
+# 1.0   2026-11-01  First public release.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write       # create the release
+  id-token: write       # sign the attestation (Sigstore, via OIDC)
+  attestations: write   # store the attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches script version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'.TrimStart('v')
+          $version = (Select-String -Path ./Invoke-EntraDeploymentRings.ps1 -Pattern '^\.VERSION\s+(\S+)').Matches[0].Groups[1].Value
+          if ($tag -ne $version) { throw "Tag v$tag does not match script .VERSION $version." }
+          "Releasing $version"
+
+      - name: Install modules
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './tests'
+          $cfg.Run.Exit = $true
+          Invoke-Pester -Configuration $cfg
+
+      - name: Build assets and checksums
+        shell: pwsh
+        run: |
+          $name = 'EntraDeploymentRings-${{ github.ref_name }}'
+          New-Item -ItemType Directory -Path dist | Out-Null
+          Copy-Item ./Invoke-EntraDeploymentRings.ps1 dist/
+          git archive --format=zip --prefix="$name/" -o "dist/$name.zip" HEAD
+          Push-Location dist
+          Get-ChildItem -File | Sort-Object Name | ForEach-Object {
+              '{0}  {1}' -f (Get-FileHash $_.Name -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          } | Set-Content SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
+          Pop-Location
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: 'dist/*'
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* \
+            --title "${{ github.ref_name }}" \
+            --notes "See CHANGELOG.md for changes. Verify downloads with: gh attestation verify <file> -R ${{ github.repository }}  (or against SHA256SUMS.txt). See docs/Security.md."

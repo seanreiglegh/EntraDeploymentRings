@@ -1,0 +1,9 @@
+{
+  "$schema": "../EntraDeploymentRings.schema.json",
+  "GroupNameBase": "SG-Deploy-Clinical",
+  "RingCount": 3,
+  "RingWeights": [10, 30, 60],
+  "IncludeEmployeeTypes": ["Employee"],
+  "ExcludeGroupIds": ["22222222-2222-2222-2222-222222222222"],
+  "AssignmentMode": "Balance"
+}

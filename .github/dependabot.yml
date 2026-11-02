@@ -1,0 +1,15 @@
+# dependabot.yml
+# Revision: 1.0
+#
+# Keeps the GitHub Actions used by the workflows up to date.
+#
+# REVISION HISTORY (most recent first)
+# 1.0   2026-11-01  First public release.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]

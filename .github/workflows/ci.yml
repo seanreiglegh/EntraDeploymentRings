@@ -1,0 +1,81 @@
+# ci.yml
+# Revision: 1.0
+#
+# The job names below (with matrix values) are the required status checks
+# in .github/rulesets/main-branch.json: test (ubuntu-latest),
+# test (windows-latest), docs, bicep. Renaming a job or changing the OS list
+# means updating that file AND the live ruleset in the same PR; a Pester test
+# fails if they disagree.
+#
+# REVISION HISTORY (most recent first)
+# 1.0   2026-11-01  First public release.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install modules
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path ./Invoke-EntraDeploymentRings.ps1 -Settings ./PSScriptAnalyzerSettings.psd1
+          $results | Format-Table -AutoSize
+          if ($results | Where-Object Severity -in 'Error', 'Warning') { throw 'PSScriptAnalyzer reported issues.' }
+
+      - name: Pester
+        shell: pwsh
+        run: |
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './tests'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          $cfg.TestResult.Enabled = $true
+          $cfg.TestResult.OutputPath = 'testResults.xml'
+          Invoke-Pester -Configuration $cfg
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-${{ matrix.os }}
+          path: testResults.xml
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation links
+        shell: pwsh
+        run: ./tools/Test-DocLinks.ps1
+
+  bicep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and lint Bicep
+        run: |
+          az bicep install
+          az bicep build --file infra/loganalytics-dcr.bicep --stdout > /dev/null
+          az bicep lint --file infra/loganalytics-dcr.bicep

@@ -1,0 +1,501 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/seanreiglegh/EntraDeploymentRings/blob/main/config/EntraDeploymentRings.schema.json",
+  "title": "EntraDeploymentRings configuration",
+  "description": "Configuration file for Invoke-EntraDeploymentRings.ps1 (schema revision 1.0, script revision 1.0). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored by the script and may be used for comments.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^[_$]": {
+      "description": "Comment or metadata key; ignored by the script."
+    }
+  },
+  "properties": {
+    "GroupNameBase": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\[\\]:]+$",
+      "description": "Prefix for every group name, e.g. SG-Deploy-Users. Groups become <base>-First, <base>-Ring01..NN, <base>-Last, <base>-Inactive. Cannot contain [ ] or :."
+    },
+    "RingCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "description": "Number of computed rings, NOT counting First, Last and Inactive."
+    },
+    "RingWeights": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "description": "Percentage of computed users per ring, one value per ring, in order. Must add up to 100 (checked by the script, +/- 0.01). Omit for equal sizes."
+    },
+    "AssignmentMode": {
+      "type": "string",
+      "enum": [
+        "Hash",
+        "Balance"
+      ],
+      "default": "Hash",
+      "description": "How users without a ring are placed. Hash: deterministic, returning users go back to the same ring. Balance: fills the ring furthest below target."
+    },
+    "HashSeed": {
+      "type": "string",
+      "description": "Advanced. Seed mixed into the hash; defaults to GroupNameBase. Changing it changes where NEW users land."
+    },
+    "CreateMissingGroups": {
+      "type": "boolean",
+      "default": false,
+      "description": "Create missing ring groups. Keep false for scheduled runs; use it only for the run that should create the groups."
+    },
+    "RetireOrphanRings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Empty ring groups above RingCount after RingCount was reduced. A one-off action: prefer the command line."
+    },
+    "BypassChangeLimit": {
+      "type": "boolean",
+      "default": false,
+      "description": "Apply changes even when the change limit trips. A one-off action: putting it in a scheduled config disables the main safety control."
+    },
+    "EnableInactiveRing": {
+      "type": "boolean",
+      "default": true,
+      "description": "Create and maintain the Inactive group."
+    },
+    "InactiveSignInDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650,
+      "default": 90,
+      "description": "Inactive after this many days without a successful sign-in. 0 turns the rule off. Needs Entra ID P1/P2."
+    },
+    "NewUserGraceDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650,
+      "default": 30,
+      "description": "Accounts that never signed in are only inactive once older than this."
+    },
+    "InactiveCompanyNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Former"
+      ],
+      "description": "companyName patterns (case-insensitive, * and ? wildcards) that make a user inactive. Empty turns the rule off."
+    },
+    "InactiveEmployeeTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Former"
+      ],
+      "description": "employeeType patterns that make a user inactive. Matching users stay in scope even if not in IncludeEmployeeTypes. Empty turns the rule off."
+    },
+    "InactiveUpnPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": [],
+      "description": "UPN templates that put a user in Inactive (not excluded), e.g. {user}.former@{domain}. Supports {user}, {domain}, * and ?."
+    },
+    "RemoveInactiveFromManualRings": {
+      "type": "boolean",
+      "default": false,
+      "description": "Also remove inactive users from First and Last (direct members only)."
+    },
+    "ReportExcludedInManualRings": {
+      "type": "boolean",
+      "default": true,
+      "description": "Report users who are out of scope (excluded by type, group, UPN pattern, license...) but sit in First or Last, as ExcludedUserInManualRing conflicts. The script never removes them."
+    },
+    "IncludeEmployeeTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Employee",
+        "Contingent Worker"
+      ],
+      "description": "employeeType values in scope (case-insensitive). Empty = any employee type."
+    },
+    "IncludeUserTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "Member"
+      ],
+      "description": "userType values in scope. Default excludes guests."
+    },
+    "DisabledUserAction": {
+      "type": "string",
+      "enum": [
+        "Inactive",
+        "Exclude"
+      ],
+      "default": "Inactive",
+      "description": "Inactive: disabled accounts go to the Inactive group. Exclude: they are kept out of every group."
+    },
+    "RequireAssignedLicense": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only users with at least one license are in scope."
+    },
+    "ExcludeGroupIds": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      },
+      "description": "Object IDs of groups whose members (including nested) are out of scope, e.g. break-glass or service accounts."
+    },
+    "ExcludeUpnPatterns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": [],
+      "description": "UPN templates for users kept out of every group, e.g. SVC-{user}@{domain}. Supports {user}, {domain}, * and ?."
+    },
+    "MaxChangePercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 10,
+      "description": "Change limit: stop when changes exceed this % of current managed membership..."
+    },
+    "MaxChangeFloor": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 25,
+      "description": "...and also exceed this many changes."
+    },
+    "AuthMode": {
+      "type": "string",
+      "enum": [
+        "Interactive",
+        "Certificate",
+        "ClientSecret",
+        "ManagedIdentity",
+        "ExistingConnection"
+      ],
+      "default": "Interactive",
+      "description": "Interactive is for manual runs only: a scheduled run with Interactive waits for a sign-in nobody answers. Use Certificate or ManagedIdentity for schedules."
+    },
+    "TenantId": {
+      "type": "string",
+      "description": "Tenant ID or primary domain. Required for Certificate and ClientSecret."
+    },
+    "ClientId": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "Application (client) ID. Required for Certificate and ClientSecret."
+    },
+    "CertificateThumbprint": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-fA-F]{40}$",
+      "description": "SHA-1 thumbprint (40 hex characters) of a certificate with private key in CurrentUser\\My or LocalMachine\\My."
+    },
+    "CertificateExpiryWarningDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 365,
+      "default": 30,
+      "description": "Warn when the sign-in certificate expires within this many days (Certificate auth). 0 turns the warning off. Expired certificates always stop the run."
+    },
+    "ManagedIdentityClientId": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "description": "Client ID of a user-assigned managed identity. Leave empty for system-assigned."
+    },
+    "GraphEnvironment": {
+      "type": "string",
+      "enum": [
+        "Global",
+        "USGov",
+        "USGovDoD",
+        "China"
+      ],
+      "default": "Global",
+      "description": "Microsoft cloud."
+    },
+    "ReportDirectory": {
+      "type": "string",
+      "default": "./reports",
+      "description": "Folder for report files. Reports contain UPNs: keep it access-controlled."
+    },
+    "ReportFormat": {
+      "type": "string",
+      "enum": [
+        "Csv",
+        "Json",
+        "Both"
+      ],
+      "default": "Both",
+      "description": "Which report files to write."
+    },
+    "ReportRetentionDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650,
+      "default": 0,
+      "description": "Delete this ring set's reports older than N days. 0 keeps everything."
+    },
+    "SkipReport": {
+      "type": "boolean",
+      "default": false,
+      "description": "Write no report files."
+    },
+    "TeamsWebhookUrl": {
+      "type": "string",
+      "pattern": "^$|^https://",
+      "description": "Teams Workflows webhook URL. A SECRET: prefer passing it at run time instead of storing it here."
+    },
+    "TeamsNotifyOn": {
+      "type": "array",
+      "uniqueItems": true,
+      "default": [
+        "Failed",
+        "BlockedByChangeLimit",
+        "CompletedWithErrors",
+        "CertificateExpiring"
+      ],
+      "items": {
+        "type": "string",
+        "enum": [
+          "Failed",
+          "BlockedByChangeLimit",
+          "CompletedWithErrors",
+          "CertificateExpiring",
+          "Success",
+          "WhatIf"
+        ]
+      },
+      "description": "Run results that post a Teams card. CertificateExpiring also notifies on otherwise successful runs when the certificate is close to expiry."
+    },
+    "EmailTo": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string",
+        "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      },
+      "description": "Recipients for email notifications. Setting this turns email on (needs EmailFrom and Mail.Send)."
+    },
+    "EmailFrom": {
+      "type": "string",
+      "pattern": "^$|^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+      "description": "Mailbox the email is sent from, e.g. a shared mailbox. Scope Mail.Send to it (docs/Security.md)."
+    },
+    "EmailNotifyOn": {
+      "type": "array",
+      "uniqueItems": true,
+      "default": [
+        "Failed",
+        "BlockedByChangeLimit",
+        "CompletedWithErrors",
+        "CertificateExpiring"
+      ],
+      "items": {
+        "type": "string",
+        "enum": [
+          "Failed",
+          "BlockedByChangeLimit",
+          "CompletedWithErrors",
+          "CertificateExpiring",
+          "Success",
+          "WhatIf"
+        ]
+      },
+      "description": "Run results that send an email. CertificateExpiring also notifies on otherwise successful runs when the certificate is close to expiry."
+    },
+    "LogIngestionEndpoint": {
+      "type": "string",
+      "pattern": "^$|^https://",
+      "description": "Logs ingestion endpoint of the Data Collection Rule. Set together with LogDcrImmutableId."
+    },
+    "LogDcrImmutableId": {
+      "type": "string",
+      "pattern": "^$|^dcr-",
+      "description": "Immutable ID of the Data Collection Rule (dcr-...)."
+    },
+    "LogStreamName": {
+      "type": "string",
+      "default": "Custom-EntraDeploymentRings_CL",
+      "description": "DCR stream name."
+    },
+    "LogTokenAudience": {
+      "type": "string",
+      "pattern": "^$|^https://",
+      "description": "Advanced. Azure Monitor token audience; derived from GraphEnvironment when empty."
+    },
+    "ClientSecret": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file. Pass the secret at run time (Key Vault, Automation credential)."
+    },
+    "Rebalance": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file: a scheduled job would reshuffle every user on every run. Pass -Rebalance on the command line."
+    },
+    "InitialRun": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file. Pass -InitialRun on the command line."
+    },
+    "ConfigPath": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file."
+    },
+    "Preflight": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file: a scheduled job would only ever check, never apply. Pass -Preflight on the command line."
+    },
+    "CreateGroupsOnly": {
+      "not": {},
+      "description": "NOT ALLOWED in a configuration file: a scheduled job would never fill the rings. Pass -CreateGroupsOnly on the command line for the run that creates the groups."
+    }
+  },
+  "required": [
+    "GroupNameBase",
+    "RingCount"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "AuthMode": {
+            "const": "Certificate"
+          }
+        },
+        "required": [
+          "AuthMode"
+        ]
+      },
+      "then": {
+        "required": [
+          "TenantId",
+          "ClientId",
+          "CertificateThumbprint"
+        ],
+        "properties": {
+          "TenantId": {
+            "minLength": 1
+          },
+          "ClientId": {
+            "minLength": 1
+          },
+          "CertificateThumbprint": {
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "AuthMode": {
+            "const": "ClientSecret"
+          }
+        },
+        "required": [
+          "AuthMode"
+        ]
+      },
+      "then": {
+        "required": [
+          "TenantId",
+          "ClientId"
+        ],
+        "properties": {
+          "TenantId": {
+            "minLength": 1
+          },
+          "ClientId": {
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "EmailTo": {
+            "minItems": 1
+          }
+        },
+        "required": [
+          "EmailTo"
+        ]
+      },
+      "then": {
+        "required": [
+          "EmailFrom"
+        ],
+        "properties": {
+          "EmailFrom": {
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "LogIngestionEndpoint": {
+            "minLength": 1
+          }
+        },
+        "required": [
+          "LogIngestionEndpoint"
+        ]
+      },
+      "then": {
+        "required": [
+          "LogDcrImmutableId"
+        ],
+        "properties": {
+          "LogDcrImmutableId": {
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "LogDcrImmutableId": {
+            "minLength": 1
+          }
+        },
+        "required": [
+          "LogDcrImmutableId"
+        ]
+      },
+      "then": {
+        "required": [
+          "LogIngestionEndpoint"
+        ],
+        "properties": {
+          "LogIngestionEndpoint": {
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ]
+}

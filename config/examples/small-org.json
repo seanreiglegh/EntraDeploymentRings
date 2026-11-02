@@ -1,0 +1,11 @@
+{
+  "$schema": "../EntraDeploymentRings.schema.json",
+  "GroupNameBase": "Rollout",
+  "RingCount": 3,
+  "RingWeights": [33.33, 33.33, 33.34],
+  "EnableInactiveRing": false,
+  "IncludeEmployeeTypes": [],
+  "MaxChangeFloor": 10,
+  "ReportFormat": "Csv",
+  "ReportRetentionDays": 30
+}

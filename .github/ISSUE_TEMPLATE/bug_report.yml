@@ -1,0 +1,59 @@
+name: Bug report
+description: Something doesn't work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problem?** Don't file it here. Use **Security → Report a vulnerability** ([SECURITY.md](../blob/main/SECURITY.md)).
+
+        **Remove tenant data** before posting: no UPNs, object IDs, group IDs, report files, certificates, secrets or webhook URLs.
+  - type: input
+    id: revision
+    attributes:
+      label: Script revision
+      description: The `Revision` line at the top of Invoke-EntraDeploymentRings.ps1
+      placeholder: "1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: PowerShell version, Microsoft.Graph.Authentication version, OS or Azure Automation, cloud (Global/USGov/...)
+      placeholder: "PowerShell 7.4.6, Microsoft.Graph.Authentication 2.25.0, Windows Server 2022, Global"
+    validations:
+      required: true
+  - type: dropdown
+    id: auth
+    attributes:
+      label: AuthMode
+      options: [Interactive, Certificate, ManagedIdentity, ClientSecret, ExistingConnection]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The command you ran, and the relevant config keys (redacted)
+      render: powershell
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Console output, and the run summary (Result, ErrorMessage, ChangeLimitReason). Redact tenant data.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I'm on the latest revision
+        - label: I've removed all tenant data from this issue
+          required: true

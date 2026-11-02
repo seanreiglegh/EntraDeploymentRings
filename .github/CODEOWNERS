@@ -1,0 +1,16 @@
+# CODEOWNERS
+# Revision: 1.0
+#
+# Every change needs review by a code owner (turn on "Require review from
+# Code Owners" in the branch protection rule for main).
+#
+# REVISION HISTORY (most recent first)
+# 1.0   2026-11-01  First public release.
+
+*                                   @seanreiglegh
+
+# Security-sensitive paths: the script, its permissions guidance and the release pipeline.
+/Invoke-EntraDeploymentRings.ps1    @seanreiglegh
+/docs/Security.md                   @seanreiglegh
+/docs/Setup.md                      @seanreiglegh
+/.github/                           @seanreiglegh

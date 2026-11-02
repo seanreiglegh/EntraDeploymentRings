@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not just the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: New parameter, changed default, new report field... Include how it should behave with -WhatIf and the change limit, if relevant.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds you've tried
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Does this change who gets placed or removed?
+      options: ["No", "Yes", "Not sure"]
+    validations:
+      required: true

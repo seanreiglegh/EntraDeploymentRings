@@ -1,0 +1,22 @@
+# Run output (contains UPNs and object IDs)
+reports/
+*.csv
+*.summary.json
+
+# Real configuration files; only the sample, the schema and config/examples/ are committed
+config/*.json
+!config/*.sample.json
+!config/*.schema.json
+
+# Certificates and keys (Setup.md creates EntraDeploymentRings.cer in the current folder)
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
