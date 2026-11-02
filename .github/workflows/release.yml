@@ -1,5 +1,5 @@
 # release.yml
-# Revision: 1.0
+# Revision: 1.0.1
 #
 # Publishes a GitHub release when a version tag is pushed, for example:
 #   git tag v1.0.0 && git push origin v1.0.0
@@ -12,6 +12,7 @@
 # (see docs/Security.md). Attestations are free for public repositories.
 #
 # REVISION HISTORY (most recent first)
+# 1.0.1 2026-11-02  actions/checkout v7 (Node.js 24).
 # 1.0   2026-11-01  First public release.
 
 name: Release

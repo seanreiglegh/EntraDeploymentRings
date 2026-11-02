@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/seanreiglegh/EntraDeploymentRings/blob/main/config/EntraDeploymentRings.schema.json",
   "title": "EntraDeploymentRings configuration",
-  "description": "Configuration file for Invoke-EntraDeploymentRings.ps1 (schema revision 1.0, script revision 1.0). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored by the script and may be used for comments.",
+  "description": "Configuration file for Invoke-EntraDeploymentRings.ps1 (schema revision 1.0, script revision 1.0.1). Keys match script parameter names; command-line parameters override these values. Keys starting with _ or $ are ignored by the script and may be used for comments.",
   "type": "object",
   "additionalProperties": false,
   "patternProperties": {

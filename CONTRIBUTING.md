@@ -2,11 +2,17 @@
 
 Thanks for helping improve EntraDeploymentRings. This script changes group membership in production tenants, so changes are held to a high bar for safety and testing.
 
-## Before you start
+## How to contribute
 
-- **Bugs and ideas:** open an issue using the templates.
+**Pull requests are limited to collaborators.** The project has one maintainer, and every change has to meet the rules below, so code comes in through people who have agreed to them. Anyone can still contribute:
+
+- **Bugs:** open an issue with the bug template. Include the script `Revision`, what you ran (with tenant details removed), and what happened.
+- **Ideas and changes:** open an issue with the feature template. Describe the problem first, then the change you'd like.
+- **Code you've already written:** put it in the issue, as a snippet or a link to a branch or commit on your fork. If it's taken, it's applied with credit: you're added as a co-author of the commit.
+- **Ongoing or larger work:** ask in an issue. Regular contributors can be invited as collaborators.
 - **Security problems:** report them privately ([SECURITY.md](SECURITY.md)), not as an issue.
-- **Larger changes:** open an issue first so the approach can be agreed before you write code.
+
+You can also fork the repository under the MIT licence and change your own copy however you like.
 
 ## Development setup
 
@@ -42,16 +48,20 @@ You don't need a tenant. The tests run end to end against an in-memory Graph emu
 
    New outputs go in `docs/Reports.md`. New tests go in the catalogue in `docs/Testing.md`. If you change a config shown in `docs/Examples.md`, change the matching file in `config/examples/` too; a test keeps them identical.
 
-## Pull requests
+## Pull requests (collaborators)
 
 - Keep them focused: one change per PR.
 - Fill in the PR template, including **Safety impact**.
-- CI must pass: analyzer, Pester on Windows and Linux, doc links, Bicep build.
-- A code owner must approve.
+- CI must pass: analyzer, Pester on Windows and Linux, doc links, Bicep build. The `main` ruleset blocks merging until it does.
+- The code owner is asked to review automatically. No approval is required, so a solo maintainer can merge, but read your own diff as if someone else wrote it.
 
 ## Repository setup (maintainers)
 
-Do this once, after the first push to `main`. The two rulesets in [`.github/rulesets/`](.github/rulesets) hold the exact settings:
+Do this once, after the first push to `main`.
+
+**Who can open pull requests:** Settings → General → **Pull requests** → **Collaborators only**. Everyone can still see and comment on pull requests, and open issues.
+
+The two rulesets in [`.github/rulesets/`](.github/rulesets) hold the exact settings:
 
 | File | Effect |
 |---|---|

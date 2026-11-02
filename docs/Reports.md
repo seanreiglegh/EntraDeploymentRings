@@ -236,7 +236,7 @@ The same run as the CSV sample:
 ```json
 {
   "RunId": "f06aebda-dd71-4775-9b05-6e288bef651c",
-  "ScriptRevision": "1.0",
+  "ScriptRevision": "1.0.1",
   "RingSet": "SG-Deploy-Users",
   "Mode": "Live",
   "Result": "Success",
@@ -286,7 +286,7 @@ The same run as the CSV sample:
 }
 ```
 
-In this small 400-user sample, Ring01 is at 7.83% against a 10% target. Hash placement is statistical, so small rings drift. At 14,500 users, the rings land within about half a percent of target. Use `-Rebalance -AssignmentMode Balance` once if you need exact sizes.
+In this small 400-user sample, Ring01 is at 7.83% against a 10% target. Hash placement is statistical, so small rings drift. In a 25,000-user emulated run, every ring landed within 0.35 percentage points of its target. Use `-Rebalance -AssignmentMode Balance` once if you need exact sizes.
 
 ---
 

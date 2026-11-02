@@ -1,5 +1,5 @@
 # ci.yml
-# Revision: 1.0
+# Revision: 1.0.1
 #
 # The job names below (with matrix values) are the required status checks
 # in .github/rulesets/main-branch.json: test (ubuntu-latest),
@@ -8,6 +8,7 @@
 # fails if they disagree.
 #
 # REVISION HISTORY (most recent first)
+# 1.0.1 2026-11-02  actions/checkout v7 and actions/upload-artifact v7 (Node.js 24).
 # 1.0   2026-11-01  First public release.
 
 name: CI

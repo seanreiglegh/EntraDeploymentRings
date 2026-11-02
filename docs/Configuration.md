@@ -38,6 +38,72 @@ A user already in a computed ring **stays there on every run**. Only users witho
 | `Hash` (default) | A hash of the user's ID picks the ring by weight | The same user always gets the same ring, so someone returning from Inactive goes back where they were | Ring sizes drift a little from target over time |
 | `Balance` | Goes to the ring furthest below its target | Sizes stay close to target | A returning user may land in a different ring |
 
+### How Hash mode picks a ring
+
+Hash mode turns each user's object ID into a number between 0 and 1, then checks which ring's share of that range it falls in.
+
+**1. Build the input.** The text is `HashSeed|objectId`, in lower case. `HashSeed` defaults to `GroupNameBase`.
+- The object ID is the user's immutable GUID, not their UPN. A rename, a name change, or a move to another department never changes their ring.
+- Upper or lower case in the ID makes no difference.
+
+**2. Hash it.** SHA-256 of the text as UTF-8.
+
+**3. Turn the hash into a number from 0 to 1.**
+- The first 8 bytes of the hash are read as a 64-bit number, in a fixed byte order.
+- The top 53 bits are kept and divided by 2⁵³.
+- The result is a number from 0 up to, but not including, 1. It's identical on Windows, Linux and macOS.
+
+**4. Find the ring.** The weights are laid end to end along 0–1, and the number falls into one of them. With weights `1,5,15,30,49`:
+
+| Ring | Ring01 | Ring02 | Ring03 | Ring04 | Ring05 |
+|---|---|---|---|---|---|
+| Range | 0–0.01 | 0.01–0.06 | 0.06–0.21 | 0.21–0.51 | 0.51–1.00 |
+
+**Worked example.** Ring set `SG-Deploy-Users`, sample user `0f8fad5b-d9cb-469f-a165-70867728950e` (a well-known sample GUID):
+
+```text
+input     sg-deploy-users|0f8fad5b-d9cb-469f-a165-70867728950e
+SHA-256   0143f809d8374942…   (first 8 bytes)
+number    0.0049
+ring      0 ≤ 0.0049 < 0.01  →  Ring01
+```
+
+You can reproduce it yourself:
+
+```powershell
+. ./Invoke-EntraDeploymentRings.ps1          # dot-sourcing loads the functions only; nothing runs
+$w = Get-NormalizedWeights -Weights 1,5,15,30,49 -RingCount 5
+Get-HashFraction  -Seed 'SG-Deploy-Users' -ObjectId '0f8fad5b-d9cb-469f-a165-70867728950e'               # 0.0049…
+Get-HashRingIndex -Seed 'SG-Deploy-Users' -ObjectId '0f8fad5b-d9cb-469f-a165-70867728950e' -Weights $w   # 1
+```
+
+**What this gives you:**
+- **The same answer every time.** The same user, seed and weights always give the same ring, on any machine, with nothing stored. That's how a user returning from Inactive goes back to their old ring.
+- **Ring sizes that match the weights.** SHA-256 spreads IDs evenly, so a ring with weight *p* gets about *p* × users. The variation is about ±√(*n* × *p* × (1 − *p*)). For example, with 10,000 users in computed rings:
+
+  | Ring | Weight | Expected | Typical variation |
+  |---|---|---|---|
+  | Ring01 | 1% | 100 | ±10 |
+  | Ring02 | 5% | 500 | ±22 |
+  | Ring05 | 49% | 4,900 | ±50 |
+
+  A test checks the spread is within 1.5 percentage points over 20,000 users. Use `Balance` if you need exact counts.
+- **No bias.** Nothing about the person decides their ring: not name, department, site, role or hire date. Choose people deliberately through First and Last.
+
+**What changes the result:**
+- **Changing `RingWeights`** moves the boundaries, so a user near one would now hash to a neighbouring ring. Existing members don't move, because users keep their ring; only users placed from then on use the new boundaries. Run `-Rebalance` to re-sort everyone.
+- **Changing `HashSeed`** gives every user a new number. Existing members still stay put, but new and returning users are placed using the new seed. So someone coming back from Inactive may land in a different ring than before.
+- **Ring sets with different seeds are independent.** The default seed is the ring set's name, so one user can be early in one set and late in another. For example, with the weights above, the sample user lands in Ring01 of `SG-Deploy-Users`, Ring02 of `SG-Teams-Users` and Ring05 of `SG-Apps-Users`. Give two ring sets the same `HashSeed` (and the same weights) if you want each person in the same position in both.
+
+**Where Hash mode is used:**
+- placing new and returning users (Hash mode)
+- re-placing everyone with `-Rebalance` or `-InitialRun` (Hash mode)
+- choosing which ring to keep when a user is found in two computed rings, in either mode
+
+`Balance` doesn't hash: it fills whichever ring is furthest below its target.
+
+**Not a security control.** SHA-256 is used here only because it spreads values evenly. Anyone who knows the seed and an object ID can work out the ring, which is fine, because ring membership isn't secret.
+
 ### Re-sorting everyone
 
 Changing `RingWeights` or `RingCount` **does not move existing users**. To re-sort everyone, run once with `-Rebalance`:
@@ -348,8 +414,8 @@ Secrets and managed identities aren't checked. The script can't read a secret's 
 | `GroupNameBase` | *(required)* | Prefix for every group name |
 | `RingCount` | *(required)* | Number of computed rings (1–50), not counting First, Last and Inactive |
 | `RingWeights` | equal split | Percentage per ring; must add up to 100 |
-| `AssignmentMode` | `Hash` | `Hash` or `Balance`; see [above](#users-keep-their-ring) |
-| `HashSeed` | `GroupNameBase` | Changing it changes where *new* users land |
+| `AssignmentMode` | `Hash` | `Hash` or `Balance`; see [above](#users-keep-their-ring) and [how Hash mode picks a ring](#how-hash-mode-picks-a-ring) |
+| `HashSeed` | `GroupNameBase` | Changing it changes where *new* users land; see [how Hash mode picks a ring](#how-hash-mode-picks-a-ring) |
 | `Rebalance` | off | Re-sort everyone once; skips the change limit; command line only |
 | `InitialRun` | off | Same as `Rebalance`, with a different report label |
 | `CreateGroupsOnly` | off | Create any missing ring group, then stop: no users read, no membership changed. Needs only group permissions: `Group.Create` for an app, `Group.ReadWrite.All` for your own sign-in. Can't be combined with `Rebalance`, `InitialRun`, `Preflight` or `RetireOrphanRings`. Command line only. |

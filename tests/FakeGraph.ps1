@@ -1,6 +1,6 @@
 # =============================================================================
 #  FakeGraph.ps1
-#  Revision: 1.0
+#  Revision: 1.0.1
 #
 #  In-memory Microsoft Graph emulator used by the Pester tests. Dot-source it
 #  AFTER the main script: the functions below shadow Invoke-MgGraphRequest,
@@ -14,6 +14,7 @@
 #         DELETE members/{id}/$ref)
 #
 #  REVISION HISTORY (most recent first)
+#  1.0.1 2026-11-02  Placeholder timestamp in emulated error bodies.
 #  1.0   2026-11-01  First public release.
 # =============================================================================
 
@@ -97,7 +98,7 @@ function New-FakeError {
     param([int] $Status, [string] $Code, [string] $Message)
     $resp = [pscustomobject]@{ StatusCode = $Status; Headers = $null }
     # Like the real SDK: the message ends with Graph's JSON error body.
-    $json = @{ error = @{ code = $Code; message = $Message; innerError = @{ 'request-id' = '00000000-0000-0000-0000-0000000000aa'; date = '2026-10-27T23:40:54' } } } | ConvertTo-Json -Depth 5 -Compress
+    $json = @{ error = @{ code = $Code; message = $Message; innerError = @{ 'request-id' = '00000000-0000-0000-0000-0000000000aa'; date = '2026-01-15T12:00:00' } } } | ConvertTo-Json -Depth 5 -Compress
     $ex = [System.Exception]::new("Response status code does not indicate success: $Status ($Code). $json")
     $ex | Add-Member -NotePropertyName Response -NotePropertyValue $resp
     throw $ex

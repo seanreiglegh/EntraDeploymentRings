@@ -164,14 +164,14 @@ Then preview a real run with `-WhatIf` in place of `-Preflight`.
 When Microsoft Graph refuses a call, the script stops and explains it, for example:
 
 ```text
-Microsoft Graph refused access (403 Authorization_RequestDenied) while listing groups (looking for ring groups above RingCount, whose names start with 'GRP-Deploy-Users-Ring').
-  Request:    GET /groups?$filter=startswith(displayName,'GRP-Deploy-Users-Ring')&$select=id,displayName,description
+Microsoft Graph refused access (403 Authorization_RequestDenied) while listing groups (looking for ring groups above RingCount, whose names start with 'SG-Deploy-Users-Ring').
+  Request:    GET /groups?$filter=startswith(displayName,'SG-Deploy-Users-Ring')&$select=id,displayName,description
   Graph said: Insufficient privileges to complete the operation.
   Needs:      one of GroupMember.ReadWrite.All, GroupMember.Read.All, Group.Read.All, Group.ReadWrite.All, Directory.Read.All, Directory.ReadWrite.All (to read groups)
   Signed in:  app 'EntraDeploymentRings' 11111111-1111-1111-1111-111111111111 (application permissions) in tenant 22222222-2222-2222-2222-222222222222
   Token has:  AuditLog.Read.All, User.Read.All
   Fix:        Grant GroupMember.ReadWrite.All as an Application permission to this identity and select Grant admin consent (...)
-  request-id: a4fc623e-814e-4ce8-8a17-95620e61aaaa, 2026-10-27T23:40:54 UTC (give this to Microsoft support if you need them)
+  request-id: 11111111-2222-3333-4444-555555555555, 2026-01-15T12:00:00 UTC (give this to Microsoft support if you need them)
 ```
 
 Compare **Needs** with **Token has**:

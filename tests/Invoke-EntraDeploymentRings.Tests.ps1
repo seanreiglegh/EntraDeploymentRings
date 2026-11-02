@@ -1,6 +1,6 @@
 # =============================================================================
 #  Invoke-EntraDeploymentRings.Tests.ps1
-#  Revision: 1.0
+#  Revision: 1.0.1
 #
 #  Pester 5 tests. Unit tests for the pure ring logic plus end-to-end runs
 #  against the in-memory Graph emulator in FakeGraph.ps1. No tenant and no
@@ -9,6 +9,8 @@
 #    Invoke-Pester -Path ./tests -Output Detailed
 #
 #  REVISION HISTORY (most recent first)
+#  1.0.1 2026-11-02  Example request IDs, timestamp and group prefix standardised on
+#                    obvious placeholders; Examples sync test accepts CRLF.
 #  1.0   2026-11-01  First public release.
 # =============================================================================
 
@@ -1342,8 +1344,8 @@ Describe 'Access-denied explanations' {
                                TenantId = '22222222-2222-2222-2222-222222222222'; Scopes = $Scopes }
         }
         $script:Denied = [pscustomobject]@{ Code = 'Authorization_RequestDenied'; Message = 'Insufficient privileges to complete the operation.'
-                                            RequestId = 'a4fc623e-814e-4ce8-8a17-95620e61aaaa'; Date = '2026-10-27T23:40:54' }
-        $script:ListUri = 'v1.0/groups?$filter=startswith%28displayName%2C%27GRP-Deploy-Users-Ring%27%29&$select=id,displayName,description'
+                                            RequestId = '11111111-2222-3333-4444-555555555555'; Date = '2026-01-15T12:00:00' }
+        $script:ListUri = 'v1.0/groups?$filter=startswith%28displayName%2C%27SG-Deploy-Users-Ring%27%29&$select=id,displayName,description'
     }
 
     It 'knows what <Method> <Uri> needs' -ForEach @(
@@ -1370,30 +1372,30 @@ Describe 'Access-denied explanations' {
 
     It 'shows the request decoded, without the host or API version' {
         (Get-RingGraphPermissionHint -Method GET -Uri "https://graph.microsoft.com/$script:ListUri").Path |
-            Should -Be "/groups?`$filter=startswith(displayName,'GRP-Deploy-Users-Ring')&`$select=id,displayName,description"
+            Should -Be "/groups?`$filter=startswith(displayName,'SG-Deploy-Users-Ring')&`$select=id,displayName,description"
     }
 
     It 'reads the code, message and request-id from the SDK error text' {
-        $raw = "GET`nhttps://graph.microsoft.com/$script:ListUri HTTP/2.0 403 Forbidden Cache-Control: no-cache request-id: a4fc623e-814e-4ce8-8a17-95620e61aaaa Content-Type: application/json  " +
-               '{"error":{"code":"Authorization_RequestDenied","message":"Insufficient privileges to complete the operation.","innerError":{"date":"2026-10-27T23:40:54","request-id":"a4fc623e-814e-4ce8-8a17-95620e61aaaa","client-request-id":"7c693884-a577-4c45-adf4-69bd0e5497f5"}}}'
+        $raw = "GET`nhttps://graph.microsoft.com/$script:ListUri HTTP/2.0 403 Forbidden Cache-Control: no-cache request-id: 11111111-2222-3333-4444-555555555555 Content-Type: application/json  " +
+               '{"error":{"code":"Authorization_RequestDenied","message":"Insufficient privileges to complete the operation.","innerError":{"date":"2026-01-15T12:00:00","request-id":"11111111-2222-3333-4444-555555555555","client-request-id":"66666666-7777-8888-9999-000000000000"}}}'
         $er = [System.Management.Automation.ErrorRecord]::new([System.Exception]::new($raw), 'x', 'PermissionDenied', $null)
         $d = Get-RingGraphErrorDetail -ErrorRecord $er
         $d.Code | Should -Be 'Authorization_RequestDenied'
         $d.Message | Should -Be 'Insufficient privileges to complete the operation.'
-        $d.RequestId | Should -Be 'a4fc623e-814e-4ce8-8a17-95620e61aaaa'
-        $d.Date | Should -Be '2026-10-27T23:40:54'
+        $d.RequestId | Should -Be '11111111-2222-3333-4444-555555555555'
+        $d.Date | Should -Be '2026-01-15T12:00:00'
         (Get-GraphErrorStatus -ErrorRecord $er).Status | Should -Be 403
     }
 
     It 'tells an app to grant the missing permission and consent to it' {
         $m = Get-RingGraphAccessDeniedMessage -Method GET -Uri $script:ListUri -Detail $script:Denied -Purpose 'looking for ring groups' -Session (New-Session @('User.Read.All', 'AuditLog.Read.All'))
         $m | Should -Match 'refused access \(403 Authorization_RequestDenied\) while listing groups \(looking for ring groups\)'
-        $m | Should -Match ([regex]::Escape("Request:    GET /groups?`$filter=startswith(displayName,'GRP-Deploy-Users-Ring')"))
+        $m | Should -Match ([regex]::Escape("Request:    GET /groups?`$filter=startswith(displayName,'SG-Deploy-Users-Ring')"))
         $m | Should -Match 'Needs:      one of GroupMember\.ReadWrite\.All, GroupMember\.Read\.All'
         $m | Should -Match "Signed in:  app 'EntraDeploymentRings' 11111111-1111-1111-1111-111111111111 \(application permissions\) in tenant 22222222"
         $m | Should -Match 'Token has:  AuditLog\.Read\.All, User\.Read\.All'
         $m | Should -Match 'Fix:        Grant GroupMember\.ReadWrite\.All as an Application permission .* Grant admin consent'
-        $m | Should -Match 'request-id: a4fc623e-814e-4ce8-8a17-95620e61aaaa, 2026-10-27T23:40:54 UTC'
+        $m | Should -Match 'request-id: 11111111-2222-3333-4444-555555555555, 2026-01-15T12:00:00 UTC'
     }
 
     It 'suggests GroupMember.Read.All when the app already has GroupMember.ReadWrite.All' {

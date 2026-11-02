@@ -2,6 +2,17 @@
 
 Most recent first. The script header carries the matching `Revision`, and `.VERSION` carries the same number for releases.
 
+## 1.0.1 — 2026-11-02
+
+No change to how the script behaves.
+
+- **Examples:** the Graph request and client-request IDs, error timestamp and group-name prefix in the tests and docs now use obvious placeholders. The separate scale check uses 25,000 users.
+- **Docs:**
+  - *How Hash mode picks a ring* (Configuration.md): the SHA-256 input, the 0–1 mapping, ring boundaries, a reproducible worked example, expected spread, and what changes the result.
+  - *Contributing:* pull requests are limited to collaborators; everyone else contributes through issues. The review note is corrected: no approval is required.
+- **Tests:** the Examples sync test accepts Windows (CRLF) line endings.
+- **CI and release workflows:** `actions/checkout@v7` and `actions/upload-artifact@v7`, which run on Node.js 24. `actions/attest@v4` is already current.
+
 ## 1.0.0 — 2026-11-01
 
 First public release.
